@@ -96,6 +96,11 @@ php -l <file>                                          # host PHP 8.5.11, lint o
 - **This network:** `*.vercel.app` doesn't load (TLS fails, also via WebFetch and `vercel
   curl`); the owner checks the live site from his phone. Check deploys with
   `vercel ls jmcastillo-portfolio --scope kaizerrrs-projects` and `vercel inspect <url>`.
+  To tell whether the live site is current without fetching it: `dist/` holds the last build
+  that was deployed, so export again with `--out=<temp dir>` (same `--source/--url/--form-key`
+  as publish.ps1, then copy `static/` in) and hash-compare the two trees, ignoring `.vercel/`.
+  `$env:TEMP` is an 8.3 short path (`JMCAST~1`) while `FullName` is long, so take the root
+  from `(Get-Item $dir).FullName` before stripping prefixes.
 - **WSL Ubuntu** on this PC has `php-cli`/`php-curl` (8.3) and passwordless sudo; the Linux
   scripts were tested there with `docker` stubbed. Never run `docker compose` from WSL here:
   against the Windows Docker Desktop it recreates the WordPress container (bind-mount paths
