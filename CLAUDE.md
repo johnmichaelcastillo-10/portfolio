@@ -235,6 +235,9 @@ Image generation (Higgsfield) costs credits: never use it without asking.
   the phone number.
 - Owner to pin `jmcastillo-portfolio` on his GitHub profile (no API for it).
 - Owner to copy `backups/` to a private cloud drive now and then (backups are local only).
+- Owner to send one test message through the live contact form since the CSP went live
+  (2026-10-11): `form-action` and Web3Forms' redirect back to `/message-sent/` couldn't be
+  tested from here without sending a real email. If it fails, check `form-action` first.
 - Enhancements proposed on 2026-10-11 and not done yet (backups, the audit and the CSP are
   done):
   - Custom domain (~$10–15/yr, e.g. `jmcastillo.dev`): some networks block `*.vercel.app`,
