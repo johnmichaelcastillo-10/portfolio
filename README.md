@@ -22,6 +22,8 @@ block theme, edited locally and published as a fast static site.
 - **Contact form** with spam protection, sent through Web3Forms on the live site.
 - **Privacy-friendly analytics:** Vercel Web Analytics on the live site, with no cookies.
 - **Link previews and SEO:** Open Graph and Twitter card tags, canonical URLs and a sitemap.
+- **Security headers:** a strict Content-Security-Policy (inline scripts allowed only by
+  hash, generated at export), plus clickjacking, MIME-sniffing and referrer protection.
 - **Static hosting:** the public site is plain HTML, CSS and images, with no server code or
   database to attack or maintain.
 
@@ -53,7 +55,7 @@ software to install, accounts, and commands for Windows, Linux and macOS.
 | `wp-content/themes/jmc-portfolio` | Block theme: design tokens (`theme.json`), templates, front-page sections (`patterns/`), fonts, CSS and JS |
 | `wp-content/plugins/jmc-portfolio-core` | Projects and skills, link buttons, the contact form block, meta tags |
 | `scripts/` | Setup (`setup.ps1`, `setup.sh`), publish (`publish.ps1`, `publish.sh`), backup (`backup.ps1`, `backup.sh`), the static exporter, content seeding |
-| `static/vercel.json` | Live site headers, caching and URL rules |
+| `static/vercel.json` | Live site headers, caching and URL rules (the exporter adds the CSP) |
 | `Deploy.cmd`, `deploy.sh` | One-step publish (Windows, Linux/macOS) |
 | `docker-compose.yml` | WordPress, MariaDB and WP-CLI containers |
 | `DESIGN.md` | Design spec: palette, type, layout rules. Read it before changing the theme |

@@ -46,8 +46,7 @@ else
     echo 'STATIC_URL is not set in .env: links will be root-relative and canonical/og:url tags relative.'
 fi
 php "${export_args[@]}" || fail 'Static export failed; nothing was deployed.'
-
-cp -r static/. dist/
+# The exporter copies static/ (vercel.json) in itself and adds the CSP header to it.
 
 if $deploy; then
     command -v vercel >/dev/null || fail 'the Vercel CLI is not installed (npm install -g vercel).'

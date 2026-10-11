@@ -42,8 +42,7 @@ if ($cfg.STATIC_URL) {
 }
 php @exportArgs
 if ($LASTEXITCODE -ne 0) { throw 'Static export failed; nothing was deployed.' }
-
-Copy-Item static\* dist\ -Recurse -Force
+# The exporter copies static\ (vercel.json) in itself and adds the CSP header to it.
 
 if ($Deploy) {
     if (-not (Test-Path .vercel\project.json)) { throw 'Not linked to Vercel: run `vercel link` in this folder first.' }

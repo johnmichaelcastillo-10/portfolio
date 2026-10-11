@@ -17,6 +17,9 @@
  *   has a contact form.
  * - Drops head links that point at things a static site doesn't have (REST API, feeds, RSD).
  * - Adds the Vercel Web Analytics script to every page.
+ * - Copies static/ (vercel.json) into the output and adds a Content-Security-Policy header that
+ *   allows only the site's own inline scripts (by hash); fails if a page has inline event
+ *   handlers the policy would block.
  * - Fails if any page contains a PHP warning, so a broken page can't be published.
  */
 
@@ -301,6 +304,28 @@ $static_form = static function ( string $html ) use ( $form_key, $target, &$erro
 	return $html;
 };
 
+// Content-Security-Policy: every inline script on every page is allowed by its SHA-256 hash,
+// collected here and written into the vercel.json header after the loop. Hashes are
+// recomputed each export, so a WordPress update that changes an inline script just changes
+// its hash. Runs on the final HTML.
+$csp_hashes = array();
+$collect_csp = static function ( string $html, string $page ) use ( &$errors, &$csp_hashes ): void {
+	// Inline event handlers and javascript: URLs can't be allowed by hash: fail instead of
+	// publishing a page whose buttons silently stop working.
+	if ( preg_match( '#<[^>]+\son[a-z]+\s*=|href\s*=\s*["\']\s*javascript:#i', $html ) ) {
+		$errors[] = "$page has an inline event handler or javascript: URL, which the CSP would block";
+	}
+	preg_match_all( '#<script\b([^>]*)>(.*?)</script>#is', $html, $m, PREG_SET_ORDER );
+	foreach ( $m as $s ) {
+		$type = preg_match( '#\btype\s*=\s*["\']?([^"\'\s>]+)#i', $s[1], $t ) ? strtolower( $t[1] ) : '';
+		// Data blocks (JSON-LD and the like) never run, so CSP doesn't apply to them.
+		$runs = in_array( $type, array( '', 'text/javascript', 'module', 'speculationrules', 'importmap' ), true );
+		if ( $runs && ! preg_match( '#\bsrc\s*=#i', $s[1] ) && '' !== $s[2] ) {
+			$csp_hashes[ "'sha256-" . base64_encode( hash( 'sha256', $s[2], true ) ) . "'" ] = true;
+		}
+	}
+};
+
 // Vercel Web Analytics: cookieless page views. Vercel serves the script once Analytics is
 // enabled on the project (dashboard → Analytics → Enable); until then it 404s harmlessly.
 $analytics = '<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>'
@@ -316,8 +341,45 @@ foreach ( $it as $f ) {
 	$html = preg_replace( '#<link[^>]+(wp-json|xmlrpc\.php|/feed/|EditURI|rel=["\']shortlink)[^>]*>\s*#i', '', $html );
 	$html = preg_replace( '#<meta name="generator"[^>]*>\s*#i', '', $html );
 	$html = $static_form( $html );
-	file_put_contents( $f->getPathname(), $rewrite( $html ) );
+	$html = $rewrite( $html );
+	$collect_csp( $html, substr( $f->getPathname(), strlen( $out ) ) );
+	file_put_contents( $f->getPathname(), $html );
 }
+
+// Host config: copy static/ (vercel.json) in, then add the Content-Security-Policy header to
+// its catch-all rule. Styles stay 'unsafe-inline': WordPress prints several <style> blocks and
+// style="" attributes, which can't all be hashed. In script-src, 'unsafe-inline' is only a
+// fallback for very old browsers; any browser that understands hashes ignores it.
+$static_dir = dirname( __DIR__ ) . '/static';
+foreach ( new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $static_dir, FilesystemIterator::SKIP_DOTS ) ) as $f ) {
+	write_file( $out . substr( $f->getPathname(), strlen( $static_dir ) ), file_get_contents( $f->getPathname() ) );
+}
+$csp = implode(
+	'; ',
+	array(
+		"default-src 'self'",
+		"script-src 'self' 'unsafe-inline' " . implode( ' ', array_keys( $csp_hashes ) ),
+		"style-src 'self' 'unsafe-inline'",
+		"img-src 'self' data:",
+		"font-src 'self'",
+		"connect-src 'self'",
+		// Web3Forms receives the form, then redirects back here (form-action covers redirects).
+		"form-action 'self' https://api.web3forms.com",
+		"frame-ancestors 'none'",
+		"base-uri 'self'",
+		"object-src 'none'",
+	)
+);
+$vercel_file = "$out/vercel.json";
+$vercel      = json_decode( (string) @file_get_contents( $vercel_file ), true );
+$catch_all   = is_array( $vercel ) ? array_search( '/(.*)', array_column( $vercel['headers'] ?? array(), 'source' ), true ) : false;
+if ( false === $catch_all ) {
+	$errors[] = 'static/vercel.json needs a headers rule with source "/(.*)" to carry the Content-Security-Policy';
+} else {
+	$vercel['headers'][ $catch_all ]['headers'][] = array( 'key' => 'Content-Security-Policy', 'value' => $csp );
+	file_put_contents( $vercel_file, json_encode( $vercel, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n" );
+}
+echo 'csp    ' . count( $csp_hashes ) . " inline script hashes\n";
 
 // Final check: nothing may still point at the local site.
 $left = array();

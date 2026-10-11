@@ -17,8 +17,10 @@ WordPress runs only on your computer, in Docker, as the editor. Publishing does 
    saves every page, stylesheet, script, font and image into `dist/` as plain files. It
    rewrites links to the live address, switches the contact form over to Web3Forms and adds
    the Vercel Web Analytics script (visits show under the project's **Analytics** tab).
-3. **Configure.** The files in `static/` (`vercel.json`: security headers, caching, trailing
-   slashes) are copied into `dist/`.
+3. **Configure.** The exporter copies `static/vercel.json` (security headers, caching,
+   trailing slashes) into `dist/` and adds a Content-Security-Policy header to it. The policy
+   only lets the browser run the site's own scripts. It's rebuilt on every export, so it
+   follows WordPress updates.
 4. **Deploy.** The Vercel CLI uploads `dist/` to production.
 
 The live site has no PHP or database, so there's nothing on it to patch or hack. If the export
