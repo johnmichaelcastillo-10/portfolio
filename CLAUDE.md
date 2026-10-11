@@ -25,8 +25,17 @@ Hosted as a static export on Vercel (see Data).
 - Never add `Co-Authored-By` or any AI attribution to commits.
 - Work on `main`, GitHub's default and only branch. The old `master` branch (someone else's
   2022 Coursera capstone) was deleted on 2026-10-11; never bring anything from it back.
-- `gh` isn't installed: repo settings (default branch, visibility) are changed by the owner
-  on github.com.
+- GitHub CLI: `gh` 2.102 (winget, `C:\Program Files\GitHub CLI\gh.exe`), logged in as
+  `johnmichaelcastillo-10` with scopes `gist`, `read:org`, `repo` (no `delete_repo`). Shells
+  started before the install don't have it on PATH: prefix commands with
+  `$env:Path = [Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [Environment]::GetEnvironmentVariable('Path','User')`.
+  `gh auth login` / `gh auth refresh -s <scope>` are interactive (one-time code): the owner
+  runs them in a separate PowerShell window, since `!` commands here lose the code and long
+  pasted `!` lines get wrapped and break. Repo deletion is blocked by the permission
+  classifier; hand the owner a script file to run instead.
+- Repo `jmcastillo-portfolio` is the account's only public repo (all others made private and
+  empty ones deleted on 2026-10-11). It has a description, homepage (the Vercel URL) and
+  topics; pinning it on the profile has no API (owner does it on github.com).
 - Never commit `.env`, `backups/` or the resume PDF (it contains a phone number).
 
 ## Run and verify
