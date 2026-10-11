@@ -215,6 +215,18 @@ Image generation (Higgsfield) costs credits: never use it without asking.
 - Missing from the user: personal projects (none yet), LinkedIn URL, resume copy without
   the phone number.
 - Owner to pin `jmcastillo-portfolio` on his GitHub profile (no API for it).
+- Owner to copy `backups/` to a private cloud drive now and then (backups are local only).
+- Enhancements proposed on 2026-10-11 and not done yet (the owner chose backups and the
+  audit first):
+  - Custom domain (~$10–15/yr, e.g. `jmcastillo.dev`): some networks block `*.vercel.app`,
+    this one included. Then set `STATIC_URL`, add the domain in Vercel, update the repo
+    homepage, Web3Forms' site URL and the docs.
+  - Google Search Console: verify the site and submit `/wp-sitemap.xml` (owner's account).
+  - Stricter headers (Content-Security-Policy) in `static/vercel.json`. Needs hashes or
+    `'unsafe-inline'` for the inline scripts (the `js` class setter in `<head>` and the
+    analytics `window.va` stub) and must allow `api.web3forms.com` as a `form-action`.
+  - A captcha on the contact form, only if spam arrives (Web3Forms calls its `botcheck`
+    honeypot weak; hCaptcha is its suggested option).
 
 ## graphify
 
