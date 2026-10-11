@@ -15,9 +15,6 @@ graphify-out/
 # Static export: rebuild with scripts/publish.ps1
 dist/
 
-# Netlify CLI link state
-.netlify/
-
 # Vercel CLI link state and the token `vercel link` writes
 .vercel/
 .env.local

@@ -82,9 +82,9 @@ php -l <file>                                          # host PHP 8.5.11, lint o
   `docker compose up -d` from Windows restores it. Never run compose from WSL here. The account has two teams, so non-interactive CLI calls need
   `--scope kaizerrrs-projects`. `*.vercel.app` doesn't load from this network (TLS fails, also
   via WebFetch and `vercel curl`): the owner checks the live site from his phone.
-  The owner confirmed the Vercel site and form work (2026-10-11). The old Netlify site
-  (jmcastillo-portfolio.netlify.app) is no longer deployed; the owner deletes it from the
-  Netlify dashboard, and `.netlify/` is stale.
+  The owner confirmed the Vercel site and form work (2026-10-11). The old Netlify site was
+  deleted the same day (`netlify sites:delete`); the Netlify skills in `.claude/skills/` are
+  leftovers from that period.
 - **Contact form is Web3Forms** (free). `.env` holds `WEB3FORMS_KEY` (public by design, ends up
   in the HTML). The exporter rewrites the form to post to `api.web3forms.com/submit` with
   `access_key`, `subject`, `from_name`, `redirect` = `STATIC_URL/message-sent/` (free plan only
@@ -156,7 +156,7 @@ Image generation (Higgsfield) costs credits: never use it without asking.
 
 - Missing from the user: personal projects (none yet), LinkedIn URL, resume copy without
   the phone number.
-- Analytics. The owner still has to delete the old Netlify project.
+- Analytics.
 
 ## graphify
 
