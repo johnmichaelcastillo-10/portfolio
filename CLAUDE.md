@@ -70,21 +70,31 @@ php -l <file>                                          # host PHP 8.5.11, lint o
   are personal work only, added by the owner. Experience duties stay generic ("internal
   business web applications"). The Work section, its nav/footer links and the hero's "View my
   work" button appear only when a project is published (`jmc_has_projects()`).
-- **Live site:** https://jmcastillo-portfolio.vercel.app (Vercel project `jmcastillo-portfolio`,
-  Vercel user `jmcastillo`, team scope `kaizerrrs-projects`, Hobby plan; linked via `.vercel/`,
-  gitignored). The owner deploys by double-clicking `Deploy.cmd`, which runs
-  `.\scripts\publish.ps1 -Deploy` (starts Docker Desktop if needed, waits for WordPress, copies
-  `.vercel/` into `dist/`, then `vercel deploy dist --prod`). Linux/macOS twins:
-  `deploy.sh` → `scripts/publish.sh --deploy`, and `scripts/setup.sh`; keep them in step with
-  the `.ps1` versions. They were tested in WSL Ubuntu (PHP 8.3 from apt) with docker stubbed:
-  running `docker compose` from WSL against the Windows Docker Desktop recreates the
-  WordPress container (bind-mount paths differ) and fails on port 8088, after which
-  `docker compose up -d` from Windows restores it. Never run compose from WSL here. The account has two teams, so non-interactive CLI calls need
-  `--scope kaizerrrs-projects`. `*.vercel.app` doesn't load from this network (TLS fails, also
-  via WebFetch and `vercel curl`): the owner checks the live site from his phone.
-  The owner confirmed the Vercel site and form work (2026-10-11). The old Netlify site was
-  deleted the same day (`netlify sites:delete`), along with the vendored Netlify skills and
-  `skills-lock.json`.
+- **Live site:** https://jmcastillo-portfolio.vercel.app, confirmed working by the owner
+  (site and contact form) on 2026-10-11. Vercel project `jmcastillo-portfolio`
+  (`prj_vHosBmme08QtonjenDp4B1ypPWvy`), Vercel user `jmcastillo`, team scope
+  `kaizerrrs-projects`, Hobby plan (personal, non-commercial use only; if the owner starts
+  using the site for paid work, Cloudflare Pages is the drop-in alternative). Vercel CLI is a
+  global npm install. Linked via `.vercel/` (gitignored); `vercel link` also writes a token to
+  `.env.local` and appends `.env*` to `.gitignore`, which would hide `.env.example`, so
+  narrow it back to `.env.local` if it ever re-links. The account has two teams, so
+  non-interactive CLI calls need `--scope kaizerrrs-projects`. Not connected to GitHub on
+  purpose: a Git-triggered build would publish the raw repo, since the content lives in the
+  local WordPress database.
+- **Deploying:** the owner double-clicks `Deploy.cmd`, which runs
+  `.\scripts\publish.ps1 -Deploy` (starts Docker Desktop if needed, waits for WordPress,
+  exports, copies `.vercel/` into `dist/`, then `vercel deploy dist --prod`). Nothing is
+  published if any step fails. Linux/macOS twins: `deploy.sh` → `scripts/publish.sh --deploy`,
+  and `scripts/setup.sh`; keep them in step with the `.ps1` versions and `DEPLOYMENT.md`.
+- **This network:** `*.vercel.app` doesn't load (TLS fails, also via WebFetch and `vercel
+  curl`); the owner checks the live site from his phone. Check deploys with
+  `vercel ls jmcastillo-portfolio --scope kaizerrrs-projects` and `vercel inspect <url>`.
+- **WSL Ubuntu** on this PC has `php-cli`/`php-curl` (8.3) and passwordless sudo; the Linux
+  scripts were tested there with `docker` stubbed. Never run `docker compose` from WSL here:
+  against the Windows Docker Desktop it recreates the WordPress container (bind-mount paths
+  differ) and fails on port 8088; `docker compose up -d` from Windows restores it.
+- The old Netlify site was deleted on 2026-10-11 (`netlify sites:delete`), along with the
+  vendored Netlify skills and `skills-lock.json`. Nothing in the project uses Netlify now.
 - **Contact form is Web3Forms** (free). `.env` holds `WEB3FORMS_KEY` (public by design, ends up
   in the HTML). The exporter rewrites the form to post to `api.web3forms.com/submit` with
   `access_key`, `subject`, `from_name`, `redirect` = `STATIC_URL/message-sent/` (free plan only
@@ -100,8 +110,11 @@ php -l <file>                                          # host PHP 8.5.11, lint o
   that needs PHP at request time won't work live; new server features must have a static
   equivalent. A new page reachable only by a link is found by the crawler; one not linked
   anywhere must be added to the seed list in the exporter.
-- `scripts/seed-content.php` sets the tagline and creates the `message-sent` page. Pre-removal backup with the old projects:
-  `backups/wordpress-before-removing-projects-*.sql` (local only, never publish it).
+- `scripts/seed-content.php` sets the tagline and creates the `message-sent` page.
+  Pre-removal backup with the old projects: `backups/wordpress-before-removing-projects-*.sql`
+  (local only, never publish it). Content added in the admin lives only in this PC's Docker
+  volumes: a fresh setup elsewhere deploys a bare site unless the DB and uploads are copied
+  over first (steps in `DEPLOYMENT.md`).
 - Back up before anything risky. Dump inside the container and copy out, never pipe through
   PowerShell 5.1 (it re-encodes):
   `docker compose exec -T -e MYSQL_PWD=... db sh -c "mariadb-dump -u root --single-transaction --databases wordpress > /tmp/x.sql"`
@@ -157,6 +170,7 @@ Image generation (Higgsfield) costs credits: never use it without asking.
 - Missing from the user: personal projects (none yet), LinkedIn URL, resume copy without
   the phone number.
 - Analytics.
+- Owner to pin `jmcastillo-portfolio` on his GitHub profile (no API for it).
 
 ## graphify
 
