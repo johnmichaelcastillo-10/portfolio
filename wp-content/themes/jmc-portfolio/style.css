@@ -992,6 +992,9 @@ button.wp-element-button:not(:disabled):hover {
 .project-hero-image img {
 	display: block;
 	width: 100%;
+	/* The hero img has width/height attributes and isn't an Image block (so core's
+	   .wp-block-image img rules aren't loaded); without this the height attribute wins. */
+	height: auto;
 	border-radius: var(--jmc-radius-lg);
 	background: var(--wp--preset--color--surface-2);
 	box-shadow: var(--jmc-shadow-md);

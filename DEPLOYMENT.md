@@ -10,15 +10,16 @@ everything below is installed and configured:
 
 ## How publishing works
 
-WordPress runs only on your computer, in Docker, as the editor. Publishing does three things:
+WordPress runs only on your computer, in Docker, as the editor. Publishing does four things:
 
-1. **Export.** `scripts/export-static.php` crawls the local site at http://localhost:8088 and
+1. **Back up.** The database and uploads are saved to `backups/` (see [Backups](#backups)).
+2. **Export.** `scripts/export-static.php` crawls the local site at http://localhost:8088 and
    saves every page, stylesheet, script, font and image into `dist/` as plain files. It
    rewrites links to the live address, switches the contact form over to Web3Forms and adds
    the Vercel Web Analytics script (visits show under the project's **Analytics** tab).
-2. **Configure.** The files in `static/` (`vercel.json`: security headers, caching, trailing
+3. **Configure.** The files in `static/` (`vercel.json`: security headers, caching, trailing
    slashes) are copied into `dist/`.
-3. **Deploy.** The Vercel CLI uploads `dist/` to production.
+4. **Deploy.** The Vercel CLI uploads `dist/` to production.
 
 The live site has no PHP or database, so there's nothing on it to patch or hack. If the export
 finds a PHP warning, a broken page or a leftover `localhost` link, it stops and nothing is
@@ -153,25 +154,27 @@ on your other computer (projects, skills, the resume link, uploaded images). Tha
 Docker volumes, not in git. **Deploying a fresh install would replace the live site with the
 bare one**, so copy the content first.
 
-On the old computer (replace `<DB_ROOT_PASSWORD>` with the value from its `.env`):
+Every deploy makes a backup (see [Backups](#backups)), so on the old computer the newest
+`backups/auto-<date-time>/` folder is usually all you need. To make a fresh one:
+
+| Windows | Linux / macOS |
+| --- | --- |
+| `.\scripts\backup.ps1` | `scripts/backup.sh` |
+
+Copy that folder to the new computer's `backups/` (USB drive, cloud drive; never commit it).
+Then, on the new computer after the setup script, run this from the project folder. Replace
+`<folder>` with the backup's name and `<DB_ROOT_PASSWORD>` with **the new computer's** value
+from its `.env`:
 
 ```bash
-docker compose exec -T -e MYSQL_PWD=<DB_ROOT_PASSWORD> db sh -c "mariadb-dump -u root --single-transaction --databases wordpress > /tmp/wp.sql"
-docker compose cp db:/tmp/wp.sql backups/wp.sql
-docker compose cp wordpress:/var/www/html/wp-content/uploads backups/uploads
-```
-
-Copy the `backups/` folder to the new computer (USB drive, cloud drive; never commit it).
-Then, on the new computer after the setup script, using **its** root password:
-
-```bash
-docker compose cp backups/wp.sql db:/tmp/wp.sql
+docker compose cp backups/<folder>/wordpress.sql db:/tmp/wp.sql
 docker compose exec -T -e MYSQL_PWD=<DB_ROOT_PASSWORD> db sh -c "mariadb -u root < /tmp/wp.sql"
-docker compose cp backups/uploads/. wordpress:/var/www/html/wp-content/uploads
+docker compose cp backups/<folder>/uploads/. wordpress:/var/www/html/wp-content/uploads
 docker compose exec wordpress chown -R www-data:www-data /var/www/html/wp-content/uploads
 ```
 
-The imported database keeps the old WordPress admin password.
+The imported database keeps the old WordPress admin password. The same commands restore a
+backup on the same computer, for example after a broken update.
 
 ### Configure `.env`
 
@@ -201,7 +204,19 @@ This creates `.vercel/` (and a `.env.local` token), both gitignored.
 | Build and deploy | Double-click `Deploy.cmd` | `./deploy.sh` |
 | Same, from a terminal | `.\scripts\publish.ps1 -Deploy` | `scripts/publish.sh --deploy` |
 | Build only (no upload) | `.\scripts\publish.ps1` | `scripts/publish.sh` |
-| Preview the build | `php -S 127.0.0.1:8099 -t dist` | `php -S 127.0.0.1:8099 -t dist` |
+| Preview the build | `node scripts/serve-dist.js` | `node scripts/serve-dist.js` |
+
+The preview serves `dist/` at http://127.0.0.1:8099 the way Vercel does (compressed, with
+the 404 page). `dist/` is built for the live address, though, so its pages load their styles
+and images from the live site. For a fully local copy, build one for the preview address
+into another folder and serve that instead (add `--form-key=<your key>`, as the form needs it):
+
+```bash
+php scripts/export-static.php --url=http://127.0.0.1:8099 --form-key=<WEB3FORMS_KEY> --out=preview
+node scripts/serve-dist.js preview
+```
+
+Delete the `preview` folder afterwards; it's not needed for deploying.
 
 On Windows the script starts Docker Desktop if it isn't running. On Linux, start Docker
 yourself (`sudo systemctl start docker`) if it isn't running.
@@ -218,6 +233,30 @@ Then check, ideally from your phone:
 - The contact form sends: you land on the "Message sent" page and the email arrives.
 - A made-up address such as `/nope/` shows the site's own 404 page.
 
+## Backups
+
+Your content (projects, text, settings, uploaded images, contact messages) exists only in
+Docker on your computer. Every deploy first saves a backup:
+
+```
+backups/auto-2026-10-11_120848/
+├── wordpress.sql    the whole database
+└── uploads/         images and files added in the admin
+```
+
+- The newest 10 automatic backups are kept; older `auto-*` folders are deleted. Other
+  folders in `backups/` are never touched.
+- If the backup fails, nothing is deployed.
+- Run one any time with `.\scripts\backup.ps1` (Windows) or `scripts/backup.sh`
+  (Linux/macOS). Keep more with `.\scripts\backup.ps1 -Keep 20` or `KEEP=20 scripts/backup.sh`.
+- **Copy `backups/` to a private cloud drive** (Google Drive, OneDrive) now and then: a
+  backup on the same disk doesn't survive that disk failing. Keep that copy private, since it
+  holds contact messages and your admin password hash. `backups/` is never committed to git.
+
+To restore one, follow the commands in [Bring your content over](#bring-your-content-over).
+
+## Undoing a deploy
+
 Every deploy stays in the Vercel dashboard. To undo a bad one, open the project's
 **Deployments** tab, open the previous production deployment's ⋯ menu and choose
 **Instant Rollback**.
@@ -228,6 +267,7 @@ Every deploy stays in the Vercel dashboard. To undo a bad one, open the project'
 | --- | --- |
 | `docker compose up failed` / port 8088 in use | Another app uses port 8088. Stop it, or change `WP_PORT` and `WP_URL` in `.env`. |
 | `cannot reach Docker` (Linux) | `sudo systemctl start docker`; make sure you logged out and back in after `usermod -aG docker`. |
+| `Backup failed: could not dump the database` | `DB_ROOT_PASSWORD` in `.env` doesn't match the database, or the `db` container isn't running (`docker compose ps`). |
 | `Static export failed` with "contains a PHP warning" | A page shows a PHP error. Open it at http://localhost:8088 and fix the code first. |
 | "the contact form needs --form-key" | `WEB3FORMS_KEY` or `STATIC_URL` is missing from `.env` (check the spelling). |
 | "the contact form markup no longer matches" | The plugin's form HTML changed; update the rewrite in `scripts/export-static.php`. |

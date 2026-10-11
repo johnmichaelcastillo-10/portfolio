@@ -2,7 +2,7 @@
 # Linux/macOS twin of publish.ps1: builds the static site in dist/ from the local WordPress,
 # and optionally deploys it to Vercel.
 #
-#   scripts/publish.sh            # export only; preview with: php -S 127.0.0.1:8099 -t dist
+#   scripts/publish.sh            # export only; preview: node scripts/serve-dist.js (DEPLOYMENT.md)
 #   scripts/publish.sh --deploy   # export, then deploy to Vercel (production)
 #
 # Needs docker (with the compose plugin), php with the curl extension, curl, and for --deploy
@@ -36,6 +36,8 @@ for _ in $(seq 30); do
     curl -fsS -o /dev/null --max-time 5 "$WP_URL" && break
     sleep 2
 done
+
+if $deploy; then scripts/backup.sh || fail 'nothing was deployed.'; fi
 
 export_args=(scripts/export-static.php "--source=$WP_URL" "--form-key=$WEB3FORMS_KEY")
 if [[ -n "$STATIC_URL" ]]; then

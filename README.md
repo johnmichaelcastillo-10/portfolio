@@ -52,7 +52,7 @@ software to install, accounts, and commands for Windows, Linux and macOS.
 | --- | --- |
 | `wp-content/themes/jmc-portfolio` | Block theme: design tokens (`theme.json`), templates, front-page sections (`patterns/`), fonts, CSS and JS |
 | `wp-content/plugins/jmc-portfolio-core` | Projects and skills, link buttons, the contact form block, meta tags |
-| `scripts/` | Setup (`setup.ps1`, `setup.sh`), publish (`publish.ps1`, `publish.sh`), the static exporter, content seeding |
+| `scripts/` | Setup (`setup.ps1`, `setup.sh`), publish (`publish.ps1`, `publish.sh`), backup (`backup.ps1`, `backup.sh`), the static exporter, content seeding |
 | `static/vercel.json` | Live site headers, caching and URL rules |
 | `Deploy.cmd`, `deploy.sh` | One-step publish (Windows, Linux/macOS) |
 | `docker-compose.yml` | WordPress, MariaDB and WP-CLI containers |

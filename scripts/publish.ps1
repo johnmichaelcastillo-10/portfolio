@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 # Builds the static site in dist/ from the local WordPress, and optionally deploys it to Vercel.
 #
-#   .\scripts\publish.ps1            # export only; preview with: php -S 127.0.0.1:8099 -t dist
+#   .\scripts\publish.ps1            # export only; preview: node scripts/serve-dist.js (DEPLOYMENT.md)
 #   .\scripts\publish.ps1 -Deploy    # export, then deploy to Vercel (production)
 #
 # First deploy only: `npm install -g vercel`, `vercel login`, then `vercel link` in this folder
@@ -31,6 +31,8 @@ if ($LASTEXITCODE -ne 0) { throw 'docker compose up failed.' }
 for ($i = 0; $i -lt 30; $i++) {
     try { Invoke-WebRequest $cfg.WP_URL -UseBasicParsing -TimeoutSec 5 *> $null; break } catch { Start-Sleep 2 }
 }
+
+if ($Deploy) { & "$PSScriptRoot\backup.ps1" } # throws, and so stops the deploy, if it fails
 
 $exportArgs = @('scripts/export-static.php', "--source=$($cfg.WP_URL)", "--form-key=$($cfg.WEB3FORMS_KEY)")
 if ($cfg.STATIC_URL) {

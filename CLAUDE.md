@@ -101,10 +101,19 @@ php -l <file>                                          # host PHP 8.5.11, lint o
   as publish.ps1, then copy `static/` in) and hash-compare the two trees, ignoring `.vercel/`.
   `$env:TEMP` is an 8.3 short path (`JMCAST~1`) while `FullName` is long, so take the root
   from `(Get-Item $dir).FullName` before stripping prefixes.
-- **WSL Ubuntu** on this PC has `php-cli`/`php-curl` (8.3) and passwordless sudo; the Linux
-  scripts were tested there with `docker` stubbed. Never run `docker compose` from WSL here:
-  against the Windows Docker Desktop it recreates the WordPress container (bind-mount paths
-  differ) and fails on port 8088; `docker compose up -d` from Windows restores it.
+- **WSL Ubuntu** on this PC has `php-cli`/`php-curl` (8.3), passwordless sudo, and **its own
+  Docker Engine** (29.x, not Docker Desktop's integration): `docker` there sees different
+  containers and volumes with the same names. `docker compose up` from WSL builds a second,
+  empty stack that fails on port 8088 (Docker Desktop holds it) and restarts every time WSL
+  boots. That happened once on 2026-10-11 and was removed with `docker compose down -v` from
+  WSL (check `docker info` says Ubuntu first). Use WSL's engine only for throwaway tests of
+  the Linux scripts (load a backup into it, then `down -v`); the real data is Docker Desktop's.
+- **Backups:** `scripts/backup.ps1` / `backup.sh` dump the DB inside the container and copy it
+  plus `wp-content/uploads` into `backups/auto-<yyyy-MM-dd_HHmmss>/`, keep the newest 10
+  `auto-*` (`-Keep` / `KEEP=`), and delete their own folder on failure. publish runs it first
+  on `-Deploy`/`--deploy`; a failed backup stops the deploy. Tested 2026-10-11: restore into a
+  throwaway `mariadb:12.3` container (12 tables, options and posts intact), pruning, and the
+  failure cleanup on both systems. Off-site copies are the owner's job (cloud drive).
 - The old Netlify site was deleted on 2026-10-11 (`netlify sites:delete`), along with the
   vendored Netlify skills and `skills-lock.json`. Nothing in the project uses Netlify now.
 - **Contact form is Web3Forms** (free). `.env` holds `WEB3FORMS_KEY` (public by design, ends up
@@ -127,8 +136,8 @@ php -l <file>                                          # host PHP 8.5.11, lint o
   (local only, never publish it). Content added in the admin lives only in this PC's Docker
   volumes: a fresh setup elsewhere deploys a bare site unless the DB and uploads are copied
   over first (steps in `DEPLOYMENT.md`).
-- Back up before anything risky. Dump inside the container and copy out, never pipe through
-  PowerShell 5.1 (it re-encodes):
+- Back up before anything risky: `.\scripts\backup.ps1` (see Backups above). By hand: dump
+  inside the container and copy out, never pipe through PowerShell 5.1 (it re-encodes):
   `docker compose exec -T -e MYSQL_PWD=... db sh -c "mariadb-dump -u root --single-transaction --databases wordpress > /tmp/x.sql"`
   then `docker compose cp db:/tmp/x.sql backups/`.
 - Photos: **only CC0 or public domain** (the owner wants no credits on the site). The hero
@@ -147,6 +156,30 @@ php -l <file>                                          # host PHP 8.5.11, lint o
   About, Work intro, project write-ups, tagline or meta tags.
 - Content rule: only facts from the resume (`Downloads\Castillo-Resume-Dev.pdf`). Never invent
   metrics, outcomes or promises. Ask the user for numbers.
+
+## Performance audits
+
+- Last audit 2026-10-11 (Lighthouse 12, after the hero `srcset` fix): mobile perf 99 (LCP
+  2.2 s, was 2.9 s), desktop 100, accessibility 100 in light and dark, SEO 100, best
+  practices 96 only because `/_vercel/insights/script.js` 404s off Vercel (100 live).
+- How: export with `--url=http://127.0.0.1:8099 --out=<temp>` (the real `--url` would load
+  assets from `*.vercel.app`, blocked here), copy `static/` in, serve it with
+  `node scripts/serve-dist.js <temp>` (brotli, `index.html` for dirs, `404.html` with status
+  404, like Vercel; `php -S` doesn't compress and serves the home page for missing paths, and
+  `npx serve` didn't compress either), then
+  `$env:CHROME_PATH=<msedge.exe>; npx --yes lighthouse@12 <url> [--preset=desktop] --output=json`.
+- Headless Edge follows the **Windows dark theme**, so plain runs test dark mode. Force a
+  scheme with `--chrome-flags="--headless=new --blink-settings=preferredColorScheme=1"`
+  (1 light, 0 dark), and confirm via the final screenshot's brightness.
+- The PageSpeed Insights API (to audit the live site from Google) has a shared anonymous
+  quota that is often used up; it needs an API key to be reliable.
+- Mobile LCP is the header's `.brand-name` (hero text fades in, so it isn't a candidate);
+  what delays it is bandwidth spent before it, so keep above-the-fold bytes small.
+- Hero image: `hero-code.webp` (1026w) plus `-480`/`-768` copies (GD, q80) in a `srcset`,
+  inside a Custom HTML block. An Image block can't carry `srcset` without the Site Editor
+  flagging it invalid, and once no Image block is on the page core's `.wp-block-image img`
+  CSS isn't loaded, so `.hero-figure img` sets `height: auto` itself (else the `height`
+  attribute stretches it). Regenerate the copies if the photo changes.
 
 ## WordPress lessons learned here
 

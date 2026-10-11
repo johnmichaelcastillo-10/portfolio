@@ -10,7 +10,16 @@
  * are resume facts only: change them when the resume changes.
  */
 
-$hero_src = get_theme_file_uri( 'assets/images/hero-code.webp' );
+// Sized copies so phones don't download the 1026px original (made from it with GD at q80).
+// Custom HTML rather than an Image block: core/image's saved markup has no srcset, so adding
+// one would make the Site Editor flag the block as invalid.
+$hero_src    = get_theme_file_uri( 'assets/images/hero-code.webp' );
+$hero_srcset = sprintf(
+	'%s 480w, %s 768w, %s 1026w',
+	get_theme_file_uri( 'assets/images/hero-code-480.webp' ),
+	get_theme_file_uri( 'assets/images/hero-code-768.webp' ),
+	$hero_src
+);
 ?>
 <!-- wp:group {"tagName":"section","anchor":"top","align":"wide","className":"hero","layout":{"type":"default"}} -->
 <section id="top" class="wp-block-group alignwide hero"><!-- wp:group {"className":"hero-copy","layout":{"type":"default"}} -->
@@ -46,9 +55,9 @@ $hero_src = get_theme_file_uri( 'assets/images/hero-code.webp' );
 <!-- /wp:group -->
 
 <!-- wp:group {"className":"hero-media","layout":{"type":"default"}} -->
-<div class="wp-block-group hero-media"><!-- wp:image {"aspectRatio":"4/5","scale":"cover","sizeSlug":"full","linkDestination":"none","className":"hero-figure"} -->
-<figure class="wp-block-image size-full hero-figure"><img src="<?php echo esc_url( $hero_src ); ?>" alt="Close-up of colourful PHP code in a code editor" style="aspect-ratio:4/5;object-fit:cover"/></figure>
-<!-- /wp:image -->
+<div class="wp-block-group hero-media"><!-- wp:html -->
+<figure class="wp-block-image size-full hero-figure"><img src="<?php echo esc_url( $hero_src ); ?>" srcset="<?php echo esc_attr( $hero_srcset ); ?>" sizes="(max-width: 640px) calc(100vw - 2rem), 470px" width="1026" height="1282" alt="Close-up of colourful PHP code in a code editor" style="aspect-ratio:4/5;object-fit:cover"/></figure>
+<!-- /wp:html -->
 
 <!-- wp:html -->
 <dl class="stats-card">
