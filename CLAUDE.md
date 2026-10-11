@@ -81,6 +81,13 @@ php -l <file>                                          # host PHP 8.5.11, lint o
   non-interactive CLI calls need `--scope kaizerrrs-projects`. Not connected to GitHub on
   purpose: a Git-triggered build would publish the raw repo, since the content lives in the
   local WordPress database.
+- **Analytics: Vercel Web Analytics**, enabled on the project 2026-10-11 (dashboard → Analytics;
+  there's no CLI switch). Cookieless, so no consent banner. The exporter injects the
+  `window.va` stub and `/_vercel/insights/script.js` before `</head>` in every exported page,
+  so local WordPress has no tracking. Hobby: 50,000 events/month across the account (then
+  collection pauses), one-month reporting window, no custom events. Ad blockers that block
+  `/_vercel/insights` aren't counted; the dashboard shows a project-specific script path
+  that avoids this if it ever matters.
 - **Deploying:** the owner double-clicks `Deploy.cmd`, which runs
   `.\scripts\publish.ps1 -Deploy` (starts Docker Desktop if needed, waits for WordPress,
   exports, copies `.vercel/` into `dist/`, then `vercel deploy dist --prod`). Nothing is
@@ -169,7 +176,6 @@ Image generation (Higgsfield) costs credits: never use it without asking.
 
 - Missing from the user: personal projects (none yet), LinkedIn URL, resume copy without
   the phone number.
-- Analytics.
 - Owner to pin `jmcastillo-portfolio` on his GitHub profile (no API for it).
 
 ## graphify

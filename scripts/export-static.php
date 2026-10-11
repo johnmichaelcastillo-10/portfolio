@@ -16,6 +16,7 @@
  *   free plan only redirects back to the same domain, so --url is required when the site
  *   has a contact form.
  * - Drops head links that point at things a static site doesn't have (REST API, feeds, RSD).
+ * - Adds the Vercel Web Analytics script to every page.
  * - Fails if any page contains a PHP warning, so a broken page can't be published.
  */
 
@@ -300,12 +301,18 @@ $static_form = static function ( string $html ) use ( $form_key, $target, &$erro
 	return $html;
 };
 
+// Vercel Web Analytics: cookieless page views. Vercel serves the script once Analytics is
+// enabled on the project (dashboard → Analytics → Enable); until then it 404s harmlessly.
+$analytics = '<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>'
+	. "\n" . '<script defer src="/_vercel/insights/script.js"></script>' . "\n";
+
 $it = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $out, FilesystemIterator::SKIP_DOTS ) );
 foreach ( $it as $f ) {
 	if ( 'html' !== $f->getExtension() ) {
 		continue;
 	}
 	$html = file_get_contents( $f->getPathname() );
+	$html = preg_replace( '#</head>#i', $analytics . '</head>', $html, 1 );
 	$html = preg_replace( '#<link[^>]+(wp-json|xmlrpc\.php|/feed/|EditURI|rel=["\']shortlink)[^>]*>\s*#i', '', $html );
 	$html = preg_replace( '#<meta name="generator"[^>]*>\s*#i', '', $html );
 	$html = $static_form( $html );

@@ -14,7 +14,8 @@ WordPress runs only on your computer, in Docker, as the editor. Publishing does 
 
 1. **Export.** `scripts/export-static.php` crawls the local site at http://localhost:8088 and
    saves every page, stylesheet, script, font and image into `dist/` as plain files. It
-   rewrites links to the live address and switches the contact form over to Web3Forms.
+   rewrites links to the live address, switches the contact form over to Web3Forms and adds
+   the Vercel Web Analytics script (visits show under the project's **Analytics** tab).
 2. **Configure.** The files in `static/` (`vercel.json`: security headers, caching, trailing
    slashes) are copied into `dist/`.
 3. **Deploy.** The Vercel CLI uploads `dist/` to production.

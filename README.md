@@ -20,6 +20,7 @@ block theme, edited locally and published as a fast static site.
 - **Projects** as their own content type, tagged with skills, with live-site and source-code
   buttons that hide themselves when empty. The Work section only appears once a project is published.
 - **Contact form** with spam protection, sent through Web3Forms on the live site.
+- **Privacy-friendly analytics:** Vercel Web Analytics on the live site, with no cookies.
 - **Link previews and SEO:** Open Graph and Twitter card tags, canonical URLs and a sitemap.
 - **Static hosting:** the public site is plain HTML, CSS and images, with no server code or
   database to attack or maintain.
